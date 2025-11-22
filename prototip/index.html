@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberSec Project Manager - POC v1</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --bg-panel: #1e293b;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --neon-blue: #0ea5e9;
+            --neon-green: #10b981;
+            --neon-red: #ef4444;
+            --border-color: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .brand {
+            font-size: 1.2rem;
+            color: var(--neon-green);
+            font-weight: bold;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item {
+            padding: 12px 15px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 6px;
+            color: var(--text-muted);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background-color: rgba(14, 165, 233, 0.1);
+            color: var(--neon-blue);
+            border-left: 3px solid var(--neon-blue);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+
+        .btn:hover {
+            background: var(--neon-blue);
+            color: var(--bg-dark);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.5);
+        }
+
+        .btn-green {
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+        }
+        .btn-green:hover {
+            background: var(--neon-green);
+            color: var(--bg-dark);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+
+        /* Views */
+        .view-section { display: none; animation: fadeIn 0.5s; }
+        .view-section.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Dashboard Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-panel);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .stat-value { font-size: 2rem; font-weight: bold; margin-top: 10px; }
+
+        /* Project Creation Form */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; color: var(--neon-blue); font-size: 0.9rem; }
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: white;
+            border-radius: 4px;
+        }
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--neon-green);
+        }
+        .api-warning {
+            font-size: 0.8rem;
+            color: var(--neon-red);
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Task Board */
+        .board-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .board-col {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 400px;
+        }
+
+        .col-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        .task-card {
+            background: var(--bg-panel);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--neon-blue);
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        
+        .task-card:hover { transform: translateX(5px); border-left-color: var(--neon-green); }
+        
+        .ai-tag {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            font-size: 0.6rem;
+            background: rgba(14, 165, 233, 0.2);
+            color: var(--neon-blue);
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        .loader {
+            border: 4px solid var(--bg-panel);
+            border-top: 4px solid var(--neon-green);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .console-text { color: var(--neon-green); font-family: monospace; }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="brand">
+            <i class="fas fa-shield-alt"></i> SECURE.PLAN
+        </div>
+        <div class="nav-item active" onclick="showSection('dashboard')">
+            <i class="fas fa-chart-line"></i> Dashboard
+        </div>
+        <div class="nav-item" onclick="showSection('new-project')">
+            <i class="fas fa-plus-square"></i> Yeni Proje Başlat
+        </div>
+        <div class="nav-item" onclick="showSection('tasks')">
+            <i class="fas fa-tasks"></i> Görevlerim
+        </div>
+        <div class="nav-item" style="margin-top: auto;">
+            <i class="fas fa-cog"></i> Ayarlar
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <div id="dashboard" class="view-section active">
+            <div class="header">
+                <h2><i class="fas fa-home"></i> Operasyon Merkezi</h2>
+                <div style="font-size: 0.9rem; color: var(--text-muted);">Kullanıcı: <span style="color: var(--neon-blue);">Commander_Mesut</span></div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div style="color: var(--neon-blue);">Aktif Projeler</div>
+                    <div class="stat-value">3</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: var(--neon-green);">Tamamlanan Görevler</div>
+                    <div class="stat-value">42</div>
+                </div>
+                <div class="stat-card">
+                    <div style="color: var(--neon-red);">Kritik Riskler</div>
+                    <div class="stat-value">0</div>
+                </div>
+            </div>
+
+            <h3>Son Aktiviteler</h3>
+            <div style="margin-top: 20px; color: var(--text-muted); font-size: 0.9rem;">
+                <p style="margin-bottom: 10px;">> [14:02] AI Agent, "E-Ticaret Güvenliği" projesini parçalara ayırdı.</p>
+                <p style="margin-bottom: 10px;">> [13:45] Ahmet, "Auth Modülü" görevini tamamladı.</p>
+                <p>> [11:20] Firebase bağlantısı başarıyla sağlandı.</p>
+            </div>
+        </div>
+
+        <div id="new-project" class="view-section">
+            <div class="header">
+                <h2><i class="fas fa-project-diagram"></i> Yeni Operasyon Başlat</h2>
+            </div>
+
+            <div style="max-width: 800px;">
+                <div class="form-group">
+                    <label class="form-label">PROJE ADI</label>
+                    <input type="text" class="form-input" placeholder="Örn: Finans Uygulaması Sızma Testi Hazırlığı">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">AI API ANAHTARI (Gemini/OpenAI)</label>
+                    <input type="password" class="form-input" placeholder="sk-proj-...">
+                    <div class="api-warning">
+                        <i class="fas fa-lock"></i> Bu anahtar sunucuya gönderilmez, sadece tarayıcınızda işlenir.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">PROJE YOL HARİTASI (Raw Text)</label>
+                    <textarea class="form-textarea" rows="10" id="roadmapInput" placeholder="Buraya ChatGPT veya Gemini'den aldığın uzun proje planını yapıştır...
+
+Örnek:
+Faz 1: Altyapı
+- Veritabanı kurulumu (Ali)
+- API Gateway (Ayşe)
+
+Faz 2: Frontend
+..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">EKİP ÜYELERİ (Virgülle ayır)</label>
+                    <input type="text" class="form-input" value="Ahmet, Ayşe, Mehmet" id="teamInput">
+                </div>
+
+                <button class="btn btn-green" onclick="simulateAIProcessing()">
+                    <i class="fas fa-robot"></i> AI İLE GÖREVLERİ DAĞIT
+                </button>
+            </div>
+        </div>
+
+        <div id="tasks" class="view-section">
+            <div class="header">
+                <h2><i class="fas fa-columns"></i> Görev Dağılımı (AI Generated)</h2>
+                <button class="btn" onclick="showSection('new-project')">Yeni Ekle</button>
+            </div>
+
+            <div class="board-grid" id="kanbanBoard">
+                <div class="board-col">
+                    <div class="col-header">BEKLİYOR (Parsing...)</div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="loading-overlay" id="loader">
+        <div class="loader"></div>
+        <div class="console-text" id="consoleLog">AI Engine Başlatılıyor...</div>
+    </div>
+
+    <script>
+        // Navigation Logic
+        function showSection(id) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(id).classList.add('active');
+            // Basit active class toggle
+            if(id === 'dashboard') document.querySelector('.nav-item:nth-child(2)').classList.add('active');
+            if(id === 'new-project') document.querySelector('.nav-item:nth-child(3)').classList.add('active');
+            if(id === 'tasks') document.querySelector('.nav-item:nth-child(4)').classList.add('active');
+        }
+
+        // AI Simulation Logic
+        function simulateAIProcessing() {
+            const text = document.getElementById('roadmapInput').value;
+            const team = document.getElementById('teamInput').value.split(',').map(s => s.trim());
+            
+            if (!text) {
+                alert("Lütfen önce bir yol haritası metni yapıştırın.");
+                return;
+            }
+
+            // Show Loader
+            const loader = document.getElementById('loader');
+            const consoleText = document.getElementById('consoleLog');
+            loader.style.display = 'flex';
+
+            // Fake Console Logs
+            setTimeout(() => consoleText.innerText = "Metin Analiz Ediliyor...", 800);
+            setTimeout(() => consoleText.innerText = "Tokenlar Sayılıyor...", 1500);
+            setTimeout(() => consoleText.innerText = "Görevler JSON Formatına Çevriliyor...", 2200);
+            setTimeout(() => consoleText.innerText = "Kişilere Atama Yapılıyor...", 3000);
+
+            // Finish
+            setTimeout(() => {
+                loader.style.display = 'none';
+                generateMockBoard(team);
+                showSection('tasks');
+            }, 3800);
+        }
+
+        function generateMockBoard(members) {
+            const board = document.getElementById('kanbanBoard');
+            board.innerHTML = '';
+
+            // Mock Data Generator based on simulation
+            members.forEach((member, index) => {
+                let tasksHTML = '';
+                
+                // Fake tasks for demo
+                const techTasks = [
+                    "API Endpoint Güvenliği (JWT)",
+                    "Veritabanı Şeması Oluşturma",
+                    "Login Sayfası UI Tasarımı",
+                    "Github Action CI/CD Pipeline",
+                    "Unit Testlerin Yazılması"
+                ];
+
+                // Randomly assign 1-2 tasks per user for demo
+                for(let i=0; i<2; i++) {
+                    let randomTask = techTasks[Math.floor(Math.random() * techTasks.length)];
+                    tasksHTML += `
+                        <div class="task-card">
+                            <span class="ai-tag">AI Assigned</span>
+                            <div style="font-weight:bold; margin-bottom:5px;">${randomTask}</div>
+                            <div style="font-size:0.8rem; color:#94a3b8;">
+                                Öncelik: Yüksek <br>
+                                <i class="fas fa-clock"></i> Tahmini: 2 saat
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const colHTML = `
+                    <div class="board-col">
+                        <div class="col-header">
+                            <i class="fas fa-user-astronaut"></i> ${member}
+                        </div>
+                        ${tasksHTML}
+                    </div>
+                `;
+                board.innerHTML += colHTML;
+            });
+        }
+    </script>
+</body>
+</html>
