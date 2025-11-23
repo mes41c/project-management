@@ -87,10 +87,10 @@ export function AuthProvider({ children }) {
     async function updateLastSeen(uid) {
         try {
             const userRef = doc(db, "users", uid);
-            // last_seen alanını sunucu saatiyle güncelle
-            await updateDoc(userRef, { last_seen: serverTimestamp() });
+            await setDoc(userRef, { last_seen: serverTimestamp() }, { merge: true });
         } catch (e) {
-            console.error("Heartbeat hatası:", e);
+            // Sessizce geç (Konsolu kirletmesin)
+            // console.error("Heartbeat hatası:", e); 
         }
     }
 
