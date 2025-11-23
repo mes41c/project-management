@@ -87,10 +87,12 @@ export function AuthProvider({ children }) {
     async function updateLastSeen(uid) {
         try {
             const userRef = doc(db, "users", uid);
-            await setDoc(userRef, { last_seen: serverTimestamp() }, { merge: true });
+            // Sadece varsa güncelle, yoksa hata ver (ve catch bloğuna düş)
+            await updateDoc(userRef, { last_seen: serverTimestamp() });
         } catch (e) {
-            // Sessizce geç (Konsolu kirletmesin)
-            // console.error("Heartbeat hatası:", e); 
+            // Eğer döküman yoksa (yani kullanıcı yeni kayıt oluyorsa)
+            // HİÇBİR ŞEY YAPMA. Bırak önce kaydını tamamlasın.
+            // console.log("Kullanıcı henüz tam kayıtlı değil, heartbeat atlandı.");
         }
     }
 
